@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f3ee" />
+  <meta name="description" content="在浏览器本地把照片转换成像素风 SVG。调整像素密度与颜色，预览并下载矢量作品。" />
+  <title>像素图工坊 — 图片转像素风 SVG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="像素图工坊首页">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>像素图工坊</span>
+    </a>
+    <div class="top-note"><span class="local-dot"></span> 图片仅在本地处理</div>
+    <button class="text-button" id="resetButton" type="button">重置</button>
+  </header>
+
+  <main class="app-shell">
+    <aside class="sidebar">
+      <div class="intro">
+        <div class="eyebrow"><span class="eyebrow-chip"></span> 像素转换器</div>
+        <h1>把一张照片<br />变成像素作品。</h1>
+        <p>几秒钟，做出可以无限放大的 SVG 像素画。</p>
+      </div>
+
+      <section class="control-section upload-section" aria-labelledby="uploadTitle">
+        <div class="section-heading"><h2 id="uploadTitle">图片</h2><span class="step-tag">PNG · JPG · WEBP</span></div>
+        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+        <button class="dropzone" id="dropzone" type="button">
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v4h14v-4"/></svg></span>
+          <span class="drop-copy"><strong id="dropTitle">拖一张图片到这里</strong><small id="dropSub">或点击浏览文件，最大 20 MB</small></span>
+          <span class="plus-icon" aria-hidden="true">＋</span>
+        </button>
+        <p class="error-message" id="errorMessage" role="alert" hidden></p>
+      </section>
+
+      <section class="control-section settings-section" aria-labelledby="settingsTitle">
+        <div class="section-heading"><h2 id="settingsTitle">调整效果</h2><button id="defaultsButton" class="mini-reset" type="button">恢复默认</button></div>
+        <div class="dimension-fields">
+          <label class="number-control" for="outputWidthInput"><span>导出宽度</span><span class="number-input-wrap"><input id="outputWidthInput" type="number" min="16" max="4096" step="1" value="512" inputmode="numeric" /><small>px</small></span></label>
+          <label class="number-control" for="cellSizeInput"><span>最小单元格</span><span class="number-input-wrap"><input id="cellSizeInput" type="number" min="1" max="256" step="1" value="16" inputmode="numeric" /><small>px</small></span></label>
+        </div>
+        <p class="field-hint">输出高度按原图比例自动计算</p>
+        <label class="range-control" for="colorsRange">
+          <span class="range-label"><span>颜色数量</span><span class="value"><b id="colorsValue">16</b> 色</span></span>
+          <input id="colorsRange" type="range" min="1" max="48" value="16" />
+          <span class="range-hint"><span>复古</span><span>丰富</span></span>
+        </label>
+        <div class="custom-palette" id="customPalette" hidden>
+          <div class="palette-heading"><strong>自定义颜色</strong><button id="restorePaletteButton" class="palette-restore" type="button">关闭自定义颜色</button></div>
+          <p class="palette-hint">像素会匹配到最近的颜色</p>
+          <div class="palette-swatches" id="paletteSwatches"></div>
+        </div>
+        <label class="range-control" for="contrastRange">
+          <span class="range-label"><span>对比度</span><span class="value"><b id="contrastValue">100</b>%</span></span>
+          <input id="contrastRange" type="range" min="60" max="150" value="100" />
+        </label>
+        <div class="toggle-row">
+          <div><strong>透明背景</strong><small>保留原图透明区域</small></div>
+          <label class="switch"><input id="transparentToggle" type="checkbox" /><span></span></label>
+        </div>
+        <div class="toggle-row bevel-row">
+          <div><strong>阶梯倒角</strong><small>沿透明轮廓生成像素明暗边</small></div>
+          <label class="switch"><input id="bevelToggle" type="checkbox" /><span></span></label>
+        </div>
+        <label class="range-control bevel-depth-control" id="bevelDepthControl" for="bevelDepthRange" hidden>
+          <span class="range-label"><span>倒角阶梯</span><span class="value"><b id="bevelDepthValue">2</b> 格</span></span>
+          <input id="bevelDepthRange" type="range" min="1" max="4" value="2" />
+        </label>
+      </section>
+
+      <div class="sidebar-bottom">
+        <button id="downloadButton" class="download-button" type="button" disabled>
+          <span>下载 SVG</span><span class="download-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v12m0 0 5-5m-5 5-5-5M5 18v2h14v-2"/></svg></span>
+        </button>
+        <button id="copyButton" class="copy-button" type="button" disabled><span>复制 SVG 代码</span><span aria-hidden="true">⧉</span></button>
+        <div class="export-meta"><span id="exportSize">SVG · 矢量格式</span><span id="copyStatus" aria-live="polite">无限放大不失真</span></div>
+      </div>
+    </aside>
+
+    <section class="workspace" aria-label="图片预览">
+      <div class="workspace-toolbar">
+        <div class="workspace-title"><span class="live-dot"></span><strong id="workspaceHeading">准备开始</strong><span class="file-dimensions" id="fileDimensions"></span></div>
+        <div class="view-actions">
+          <button class="view-button active" id="pixelViewButton" type="button" aria-pressed="true">像素预览</button>
+          <button class="view-button" id="originalViewButton" type="button" aria-pressed="false">原图</button>
+          <span class="toolbar-divider"></span>
+          <button class="icon-button" id="zoomOutButton" type="button" aria-label="缩小预览" title="缩小">−</button>
+          <span class="zoom-label" id="zoomLabel">100%</span>
+          <button class="icon-button" id="zoomInButton" type="button" aria-label="放大预览" title="放大">＋</button>
+          <button class="icon-button fit-button" id="fitButton" type="button" aria-label="适应画布" title="适应画布"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+        </div>
+      </div>
+      <div class="stage" id="stage">
+        <div class="empty-state" id="emptyState">
+          <div class="demo-art" aria-hidden="true">
+            <div class="sun"></div><div class="pixel-cloud"></div>
+            <div class="pixel-hill hill-back"></div><div class="pixel-hill hill-front"></div>
+            <div class="pixel-flower flower-one"></div><div class="pixel-flower flower-two"></div>
+            <div class="tiny-star star-one">✳</div><div class="tiny-star star-two">✳</div>
+          </div>
+          <h2>你的画布在等一张图片</h2>
+          <p>上传照片，看看它变成 8-bit 像素艺术的样子</p>
+          <button id="emptyUploadButton" type="button" class="outline-button">选择一张图片 <span>↗</span></button>
+          <span class="empty-footnote">支持 PNG、JPG、WEBP · 最大 20 MB</span>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap" hidden>
+          <canvas id="previewCanvas" aria-label="像素化图片预览"></canvas>
+        </div>
+        <div class="stage-footer" id="stageFooter" hidden><span><span class="footer-pip"></span> 本地实时预览</span><span id="cellInfo">— × — 像素格</span></div>
+      </div>
+      <div class="workspace-bottom"><span>像素图工坊 <span class="copyright-mark">✳</span> 轻松做点小作品</span><span class="shortcut-hint"><kbd>SVG</kbd> 输出为纯矢量色块</span></div>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
